@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Real-Time Tempat Tidur PSC 119 Temanggung</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts: Roboto & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            font-family: 'Roboto', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            background-color: #f4f6f9; 
+            color: #202124;
+        }
+        
+        /* Card Aesthetics */
+        .looker-card {
+            background-color: #ffffff;
+            border: 1px solid #dadce0;
+            border-radius: 8px;
+            box-shadow: 0 1px 2px 0 rgba(60,64,67,0.08), 0 1px 3px 1px rgba(60,64,67,0.05);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .looker-card:hover {
+            box-shadow: 0 2px 6px 0 rgba(60,64,67,0.15);
+        }
+
+        /* Pulse Animation */
+        .pulse-live {
+            box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7);
+            animation: pulse-green 2s infinite;
+        }
+        @keyframes pulse-green {
+            0% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.7); }
+            70% { box-shadow: 0 0 0 8px rgba(74, 222, 128, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
+        }
+
+        /* Filter Button Active States */
+        .btn-filter-active {
+            background-color: #1a73e8 !important;
+            color: #ffffff !important;
+            border-color: #1a73e8 !important;
+        }
+    </style>
+</head>
+<body class="min-h-screen pb-12">
+
+    <!-- 1. BRANDING HEADER WITH BLUE BACKGROUND -->
+    <header class="bg-[#0f2b5c] text-white border-b border-blue-900 sticky top-0 z-50 shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-col md:flex-row items-center justify-between gap-4">
+            
+            <!-- Logo Section -->
+            <div class="flex items-center gap-3.5">
+                <img src="image-removebg-preview.png" alt="Logo Pemkab Temanggung" class="h-16 w-auto object-contain flex-shrink-0">
+                <img src="LOGO_OSC-removebg-preview.png" alt="Logo PSC 119" class="h-14 w-auto object-contain flex-shrink-0">
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight text-white">
+                        PSC 119 KABUPATEN TEMANGGUNG
+                    </h1>
+                    <p class="text-xs text-blue-200 font-normal">Sistem Monitoring Real-Time Ketersediaan Tempat Tidur Rujukan</p>
+                </div>
+            </div>
+
+            <!-- Live Status & Clock -->
+            <div class="flex items-center gap-3">
+                <div id="syncBadge" class="bg-blue-900/80 px-3.5 py-1.5 rounded-md border border-blue-700/60 flex items-center gap-2.5">
+                    <span class="w-2.5 h-2.5 bg-green-400 rounded-full pulse-live"></span>
+                    <div>
+                        <div class="text-[9px] uppercase tracking-wider text-blue-200 font-bold">Status Sistem</div>
+                        <div class="text-xs font-bold text-green-300">LIVE AUTO-SYNC</div>
+                    </div>
+                </div>
+                <div class="bg-blue-900/80 px-3.5 py-1.5 rounded-md border border-blue-700/60 text-right">
+                    <div class="text-[9px] uppercase tracking-wider text-blue-200 font-bold">Waktu Server</div>
+                    <div id="liveClock" class="text-xs font-bold font-mono text-amber-300">--:--:-- WIB</div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 mt-6 space-y-6">
+
+        <!-- 2. TOP SUMMARY KPI CARDS -->
+        <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+            <div class="looker-card p-4 border-l-4 border-l-[#1a73e8]">
+                <div class="text-xs text-[#5f6368] font-semibold uppercase tracking-wider">Total Bed Kabupaten</div>
+                <div id="totalBed" class="text-3xl font-bold text-[#202124] mt-1">0</div>
+                <div id="rsCount" class="text-[11px] text-[#70757a] mt-1 flex items-center gap-1">
+                    <i class="fa-solid fa-hospital text-[10px]"></i> 4 RS Mitra Utama
+                </div>
+            </div>
+
+            <div class="looker-card p-4 border-l-4 border-l-[#f9ab00]">
+                <div class="text-xs text-[#5f6368] font-semibold uppercase tracking-wider">Bed Terpakai</div>
+                <div id="totalTerpakai" class="text-3xl font-bold text-[#b06000] mt-1">0</div>
+                <div class="text-[11px] text-[#b06000] mt-1 font-medium">Sedang Dirawat</div>
+            </div>
+
+            <div class="looker-card p-4 border-l-4 border-l-[#1e8e3e] bg-[#f6fbf7]">
+                <div class="text-xs text-[#137333] font-bold uppercase tracking-wider">Bed Tersedia (KOSONG)</div>
+                <div id="totalTersedia" class="text-3xl font-black text-[#137333] mt-1">0</div>
+                <div class="text-[11px] text-[#137333] mt-1 font-medium">Siap Menerima Pasien</div>
+            </div>
+
+            <div class="looker-card p-4 border-l-4 border-l-[#129eaf]">
+                <div class="text-xs text-[#5f6368] font-semibold uppercase tracking-wider">Rata-Rata BOR</div>
+                <div id="totalBOR" class="text-3xl font-bold text-[#129eaf] mt-1">0%</div>
+                <div class="text-[11px] text-[#70757a] mt-1">Kapasitas Terisi</div>
+            </div>
+
+            <div class="col-span-2 md:col-span-1 looker-card p-4 border-l-4 border-l-[#5f6368]">
+                <div class="text-xs text-[#5f6368] font-semibold uppercase tracking-wider">Update Terakhir</div>
+                <div id="lastGlobalUpdate" class="text-xs font-bold text-[#202124] mt-2 font-mono">Memuat...</div>
+                <div class="text-[10px] text-[#70757a] mt-1">Diperbarui via Google Sheets</div>
+            </div>
+        </div>
+
+        <!-- SEARCH & FILTER BAR -->
+        <div class="looker-card p-4 flex flex-col md:flex-row gap-4 items-center justify-between">
+            <div class="relative w-full md:w-96">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-[#70757a] text-xs"></i>
+                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Cari RS, ICU, Bersalin, atau Ruangan..." 
+                    class="w-full bg-[#f8f9fa] border border-[#dadce0] text-[#202124] text-xs rounded-md pl-9 pr-4 py-2 focus:outline-none focus:border-[#1a73e8] focus:bg-white transition">
+            </div>
+
+            <div class="flex flex-wrap gap-2 w-full md:w-auto" id="filterButtonGroup">
+                <button id="btn-ALL" onclick="filterCategory('ALL')" class="btn-filter-active px-3 py-1.5 text-xs font-medium rounded border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4] transition">
+                    Semua Ruangan
+                </button>
+                <button id="btn-ICU" onclick="filterCategory('ICU')" class="px-3 py-1.5 text-xs font-medium rounded border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4] transition">
+                    <i class="fa-solid fa-heart-pulse text-[#d93025] mr-1"></i> ICU / Intensif
+                </button>
+                <button id="btn-Bersalin" onclick="filterCategory('Bersalin')" class="px-3 py-1.5 text-xs font-medium rounded border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4] transition">
+                    <i class="fa-solid fa-baby text-[#e37400] mr-1"></i> Bersalin / VK
+                </button>
+                <button id="btn-Umum" onclick="filterCategory('Umum')" class="px-3 py-1.5 text-xs font-medium rounded border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4] transition">
+                    <i class="fa-solid fa-bed text-[#1a73e8] mr-1"></i> Rawat Inap Umum
+                </button>
+            </div>
+        </div>
+
+        <!-- HOSPITAL CARDS SUMMARY -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="hospitalCards">
+            <!-- Cards generated dynamically -->
+        </div>
+
+        <!-- 3. DETAILED DATA TABLE -->
+        <div class="looker-card overflow-hidden">
+            <div class="px-5 py-3.5 bg-[#f8f9fa] border-b border-[#dadce0] flex items-center justify-between">
+                <h2 class="font-bold text-[#202124] text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-table-cells text-[#1a73e8]"></i> Detail Ketersediaan Tempat Tidur Per Ruangan
+                </h2>
+                <span class="text-xs text-[#5f6368]">Sumber: Google Sheets Live Sync</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs border-collapse">
+                    <thead class="bg-[#f1f3f4] text-[#5f6368] uppercase font-bold border-b border-[#dadce0]">
+                        <tr>
+                            <th class="px-4 py-3 border-r border-[#dadce0]">Nama Rumah Sakit</th>
+                            <th class="px-4 py-3 border-r border-[#dadce0]">Kategori</th>
+                            <th class="px-4 py-3 border-r border-[#dadce0]">Sub Kategori / Ruang</th>
+                            <th class="px-3 py-3 text-center border-r border-[#dadce0]">Total Bed</th>
+                            <th class="px-3 py-3 text-center border-r border-[#dadce0]">Terpakai</th>
+                            <th class="px-3 py-3 text-center border-r border-[#dadce0]">Tersedia</th>
+                            <th class="px-3 py-3 text-center border-r border-[#dadce0]">BOR (%)</th>
+                            <th class="px-4 py-3 border-r border-[#dadce0]">Waktu Update</th>
+                            <th class="px-4 py-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="bedTableBody" class="divide-y divide-[#dadce0] text-[#3c4043]">
+                        <!-- Table rows populated dynamically -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- 4 & 5. INFORMASI SUMBER (PIC RS) & KONTAK PSC 119 -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            
+            <!-- INFORMASI SUMBER DATA (PIC RS) -->
+            <div class="md:col-span-2 looker-card p-5">
+                <h3 class="text-xs font-bold text-[#202124] uppercase tracking-wider mb-4 border-b border-[#dadce0] pb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-address-book text-[#1e8e3e]"></i> Sumber Data & Kontak PIC Penginput RS Mitra
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    
+                    <!-- RSUD -->
+                    <div class="bg-[#f8f9fa] border border-[#dadce0] rounded-md p-3 flex items-start gap-3">
+                        <div class="bg-[#e8f0fe] text-[#1a73e8] p-2.5 rounded border border-[#aecbfa]">
+                            <i class="fa-solid fa-hospital-user text-base"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-[#202124]">RSUD KABUPATEN TEMANGGUNG</div>
+                            <div class="text-[11px] text-[#5f6368] font-medium">Dyah Wuyaningsih</div>
+                            <a href="https://wa.me/6285712398630?text=Halo%20Ibu%20Dyah%20Wuyaningsih,%20mohon%20konfirmasi%20ketersediaan%20bed%20RSUD" target="_blank" 
+                               class="inline-flex items-center gap-1.5 text-[11px] text-[#137333] hover:underline font-bold mt-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm text-[#1e8e3e]"></i> 0857-1239-8630
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- RSMT -->
+                    <div class="bg-[#f8f9fa] border border-[#dadce0] rounded-md p-3 flex items-start gap-3">
+                        <div class="bg-[#fef7e0] text-[#b06000] p-2.5 rounded border border-[#fde293]">
+                            <i class="fa-solid fa-hospital-user text-base"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-[#202124]">RS PKU MUHAMMADIYAH TEMANGGUNG</div>
+                            <div class="text-[11px] text-[#5f6368] font-medium">M. Rizky Mubarok</div>
+                            <a href="https://wa.me/6285877177606?text=Halo%20Bpk.%20M.%20Rizky%20Mubarok,%20mohon%20konfirmasi%20ketersediaan%20bed%20RSMT" target="_blank" 
+                               class="inline-flex items-center gap-1.5 text-[11px] text-[#137333] hover:underline font-bold mt-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm text-[#1e8e3e]"></i> 0858-7717-7606
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- RSK NW -->
+                    <div class="bg-[#f8f9fa] border border-[#dadce0] rounded-md p-3 flex items-start gap-3">
+                        <div class="bg-[#e6f4ea] text-[#137333] p-2.5 rounded border border-[#a8dab5]">
+                            <i class="fa-solid fa-hospital-user text-base"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-[#202124]">RSK NGESTI WALUYO PARAKAN</div>
+                            <div class="text-[11px] text-[#5f6368] font-medium">Kriswanto</div>
+                            <a href="https://wa.me/628156859672?text=Halo%20Bpk.%20Kriswanto,%20mohon%20konfirmasi%20ketersediaan%20bed%20RSK%20NW" target="_blank" 
+                               class="inline-flex items-center gap-1.5 text-[11px] text-[#137333] hover:underline font-bold mt-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm text-[#1e8e3e]"></i> 0815-6859-672
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- RSGS -->
+                    <div class="bg-[#f8f9fa] border border-[#dadce0] rounded-md p-3 flex items-start gap-3">
+                        <div class="bg-[#f3e8fd] text-[#9334e6] p-2.5 rounded border border-[#d7aefb]">
+                            <i class="fa-solid fa-hospital-user text-base"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-xs font-bold text-[#202124]">RS GUNUNG SAWO</div>
+                            <div class="text-[11px] text-[#5f6368] font-medium">Tuti Lestari</div>
+                            <a href="https://wa.me/6285713162452?text=Halo%20Ibu%20Tuti%20Lestari,%20mohon%20konfirmasi%20ketersediaan%20bed%20RSGS" target="_blank" 
+                               class="inline-flex items-center gap-1.5 text-[11px] text-[#137333] hover:underline font-bold mt-1.5">
+                                <i class="fa-brands fa-whatsapp text-sm text-[#1e8e3e]"></i> 0857-1316-2452
+                            </a>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- KONTAK EMERGENCY PSC 119 -->
+            <div class="bg-[#d93025] text-white rounded-lg p-5 shadow-sm flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between border-b border-red-400/60 pb-3 mb-4">
+                        <h3 class="text-xs font-extrabold uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-solid fa-phone-volume text-white animate-pulse"></i> CALL CENTER EMERGENCY
+                        </h3>
+                        <span class="text-[10px] bg-white text-[#d93025] font-black px-2 py-0.5 rounded">BEBAS PULSA</span>
+                    </div>
+
+                    <div class="text-center py-2.5 bg-red-800/40 rounded-lg border border-red-400/50 mb-4">
+                        <div class="text-xs text-red-100 font-medium">DINAS KESEHATAN KABUPATEN TEMANGGUNG</div>
+                        <div class="text-xs font-bold text-red-200 mt-0.5">PSC 119 TEMANGGUNG</div>
+                        <div class="text-4xl font-black tracking-tight mt-1">119</div>
+                        <div class="text-xs font-bold text-white mt-1.5">
+                            <i class="fa-solid fa-phone mr-1"></i> (0293) 4960969
+                        </div>
+                    </div>
+
+                    <div class="space-y-2 text-xs text-red-100">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-whatsapp w-4 text-green-300 text-sm"></i>
+                            <a href="https://wa.me/6281312189119" target="_blank" class="hover:underline font-bold text-white">081312189119</a>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-brands fa-instagram w-4 text-pink-300 text-sm"></i>
+                            <a href="https://instagram.com/psc119temanggung" target="_blank" class="hover:underline font-medium">@psc119temanggung</a>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-location-dot w-4 text-red-200"></i>
+                            <span>Dinas Kesehatan Kab. Temanggung</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-3 border-t border-red-400/60 text-[11px] text-red-100 text-center font-medium">
+                    Petugas Dispatcher Rujukan 24 Jam Non-Stop
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- JAVASCRIPT & LIVE FETCH LOGIC -->
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzwxrhquliKPXMRtVTfKy7mv3E_9XLRh1r4eqzVW8i9qOFKGU2f0xuO8ymFUv67FHgl/exec';
+
+        let rawBedData = [];
+        let activeCategory = 'ALL';
+
+        async function fetchBedData() {
+            try {
+                const response = await fetch(`${SCRIPT_URL}?t=${Date.now()}`);
+                const data = await response.json();
+
+                if (Array.isArray(data) && data.length > 0) {
+                    // MAPPING HEADER GOOGLE SHEETS KE DOKUMEN TAMPILAN
+                    rawBedData = data.map(item => {
+                        const total = parseInt(item.Total_Bed || item.total || 0, 10);
+                        const terpakai = parseInt(item.Terpakai || item.terpakai || 0, 10);
+                        const tersedia = parseInt(item.Tersedia || item.tersedia || (total - terpakai), 10);
+                        
+                        let borVal = item.BOR_Persen || item.bor || 0;
+                        if (typeof borVal === 'string') {
+                            borVal = parseFloat(borVal.replace('%', '')) || 0;
+                        }
+                        borVal = parseFloat(borVal).toFixed(1);
+
+                        return {
+                            rs: item.Nama_RS || item.rs || '',
+                            kategori: item.Kategori_Ruang || item.kategori || 'Umum',
+                            sub: item.Sub_Kategori || item.sub || 'Non Spesifik',
+                            total: total,
+                            terpakai: terpakai,
+                            tersedia: tersedia,
+                            bor: borVal,
+                            update: item.Waktu_Update || item.update || '-'
+                        };
+                    });
+
+                    updateSummaryKPI();
+                    filterTable();
+                    renderHospitalCards();
+                    
+                    document.getElementById('syncBadge').innerHTML = `
+                        <span class="w-2.5 h-2.5 bg-green-400 rounded-full pulse-live"></span>
+                        <div>
+                            <div class="text-[9px] uppercase tracking-wider text-blue-200 font-bold">Status Sistem</div>
+                            <div class="text-xs font-bold text-green-300">LIVE AUTO-SYNC</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error("Gagal mengambil data live:", error);
+                document.getElementById('syncBadge').innerHTML = `
+                    <span class="w-2.5 h-2.5 bg-red-400 rounded-full"></span>
+                    <div>
+                        <div class="text-[9px] uppercase tracking-wider text-blue-200 font-bold">Status Sistem</div>
+                        <div class="text-xs font-bold text-red-300">KONEKSI DELAY</div>
+                    </div>
+                `;
+            }
+        }
+
+        function updateSummaryKPI() {
+            const totalBed = rawBedData.reduce((acc, curr) => acc + curr.total, 0);
+            const totalTerpakai = rawBedData.reduce((acc, curr) => acc + curr.terpakai, 0);
+            const totalTersedia = rawBedData.reduce((acc, curr) => acc + curr.tersedia, 0);
+            const avgBOR = totalBed > 0 ? ((totalTerpakai / totalBed) * 100).toFixed(1) : '0.0';
+            
+            const uniqueRS = [...new Set(rawBedData.map(d => d.rs))].filter(Boolean).length;
+            const latestUpdate = rawBedData.map(d => d.update).sort().pop() || '-';
+
+            document.getElementById('totalBed').innerText = totalBed;
+            document.getElementById('totalTerpakai').innerText = totalTerpakai;
+            document.getElementById('totalTersedia').innerText = totalTersedia;
+            document.getElementById('totalBOR').innerText = avgBOR + '%';
+            document.getElementById('rsCount').innerHTML = `<i class="fa-solid fa-hospital text-[10px]"></i> ${uniqueRS} RS Mitra Utama`;
+            document.getElementById('lastGlobalUpdate').innerText = latestUpdate;
+        }
+
+        function renderTable(data) {
+            const tbody = document.getElementById('bedTableBody');
+            tbody.innerHTML = '';
+
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="text-center py-6 text-gray-400">Tidak ada data ditemukan.</td></tr>`;
+                return;
+            }
+
+            data.forEach((item, index) => {
+                let badgeColor = item.tersedia > 5 
+                    ? 'bg-[#e6f4ea] text-[#137333] border-[#a8dab5]' 
+                    : item.tersedia > 0 
+                        ? 'bg-[#fef7e0] text-[#b06000] border-[#fde293]' 
+                        : 'bg-[#fce8e6] text-[#c5221f] border-[#fad2cf]';
+
+                let statusText = item.tersedia > 5 ? 'TERSEDIA' : item.tersedia > 0 ? 'KRITIS' : 'PENUH';
+
+                const row = `
+                    <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-[#f8f9fa]'} hover:bg-[#e8f0fe]/50 transition">
+                        <td class="px-4 py-2.5 font-bold text-[#202124] border-r border-[#dadce0]">${item.rs}</td>
+                        <td class="px-4 py-2.5 border-r border-[#dadce0]">
+                            <span class="px-2 py-0.5 text-[10px] font-bold rounded bg-[#f1f3f4] text-[#5f6368]">${item.kategori}</span>
+                        </td>
+                        <td class="px-4 py-2.5 text-[#3c4043] border-r border-[#dadce0]">${item.sub}</td>
+                        <td class="px-3 py-2.5 text-center font-mono font-bold border-r border-[#dadce0]">${item.total}</td>
+                        <td class="px-3 py-2.5 text-center font-mono text-[#b06000] font-semibold border-r border-[#dadce0]">${item.terpakai}</td>
+                        <td class="px-3 py-2.5 text-center font-mono text-[#137333] font-black text-sm border-r border-[#dadce0] bg-[#f6fbf7]">${item.tersedia}</td>
+                        <td class="px-3 py-2.5 text-center font-mono border-r border-[#dadce0]">${item.bor}%</td>
+                        <td class="px-4 py-2.5 text-xs text-[#5f6368] font-mono border-r border-[#dadce0]">${item.update}</td>
+                        <td class="px-4 py-2.5 text-center">
+                            <span class="px-2.5 py-0.5 text-[10px] font-extrabold border rounded ${badgeColor}">${statusText}</span>
+                        </td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }
+
+        function renderHospitalCards() {
+            const container = document.getElementById('hospitalCards');
+            const hospitals = [...new Set(rawBedData.map(d => d.rs))].filter(Boolean);
+
+            container.innerHTML = '';
+
+            hospitals.forEach(rsName => {
+                const rsItems = rawBedData.filter(d => d.rs === rsName);
+                const totalBed = rsItems.reduce((acc, curr) => acc + curr.total, 0);
+                const totalTersedia = rsItems.reduce((acc, curr) => acc + curr.tersedia, 0);
+                const borAvg = totalBed > 0 ? (rsItems.reduce((acc, curr) => acc + curr.terpakai, 0) / totalBed * 100).toFixed(1) : '0.0';
+
+                container.innerHTML += `
+                    <div class="looker-card p-3.5 hover:border-[#1a73e8] transition cursor-pointer">
+                        <div class="text-xs font-bold text-[#202124] line-clamp-1">${rsName}</div>
+                        <div class="mt-2.5 flex items-baseline justify-between border-t border-[#f1f3f4] pt-2">
+                            <div>
+                                <div class="text-[10px] text-[#5f6368] font-bold uppercase tracking-wider">Bed Kosong</div>
+                                <div class="text-2xl font-black text-[#137333]">${totalTersedia} <span class="text-xs text-[#70757a] font-normal">/ ${totalBed}</span></div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-[10px] text-[#5f6368] font-bold uppercase tracking-wider">BOR RS</div>
+                                <div class="text-sm font-bold text-[#1a73e8] font-mono">${borAvg}%</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function filterTable() {
+            const query = (document.getElementById('searchInput').value || '').toLowerCase();
+            const filtered = rawBedData.filter(item => {
+                const matchQuery = item.rs.toLowerCase().includes(query) || 
+                                 item.kategori.toLowerCase().includes(query) || 
+                                 item.sub.toLowerCase().includes(query);
+                const matchCategory = activeCategory === 'ALL' || item.kategori === activeCategory;
+                return matchQuery && matchCategory;
+            });
+            renderTable(filtered);
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+
+            ['ALL', 'ICU', 'Bersalin', 'Umum'].forEach(c => {
+                const btn = document.getElementById(`btn-${c}`);
+                if (btn) {
+                    if (c === cat) {
+                        btn.classList.add('btn-filter-active');
+                    } else {
+                        btn.classList.remove('btn-filter-active');
+                    }
+                }
+            });
+
+            filterTable();
+        }
+
+        function updateClock() {
+            const now = new Date();
+            document.getElementById('liveClock').innerText = now.toLocaleTimeString('id-ID') + ' WIB';
+        }
+
+        window.onload = () => {
+            fetchBedData();
+            setInterval(fetchBedData, 3000); // Sync data tiap 3 detik
+            setInterval(updateClock, 1000);
+            updateClock();
+        };
+    </script>
+</body>
+</html>
